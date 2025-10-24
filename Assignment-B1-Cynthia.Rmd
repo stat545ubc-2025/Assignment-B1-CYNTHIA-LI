@@ -1,0 +1,7 @@
+---
+title: "Assignment B1"
+author: "Cynthia"
+date: "2025-10-24"
+output: html_document
+---
+
