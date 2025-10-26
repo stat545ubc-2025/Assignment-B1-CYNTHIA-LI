@@ -5,3 +5,155 @@ date: "2025-10-24"
 output: html_document
 ---
 
+## Exercise 1: Make a Function (25 points)
+
+In this exercise, you’ll be making a function and fortifying it. The function need not be complicated. The function need not be “serious”, but shouldn’t be nonsense.
+
+Function Ideas
+
+-   Did you repeat any code for a data analysis in STAT 545A? If so, consider making a function for this action.
+
+-   Consider bundling a specific group_by() %\>% summarise() workflow.
+
+-   Write a wrapper around an existing function.
+
+    -   – For example, perhaps accepting a narrower range of inputs (like not allowing logical vectors), or providing a different output.
+
+    -   – A specific example: the rqdist() function is a wrapper around quantreg::rq(), narrowing its functionality.
+
+    -   – It’s usually better to narrow a function’s focus than to broaden, so that a function doesn’t end up doing too much.
+
+-   Make a special plot that you’d want to repeat when exploring your data.
+
+-   . . .
+
+Guidelines
+
+-   Your function should not rely on anything from your working environment.
+
+-   Your function should not rely on “magic numbers”
+
+    -   – pre-selected numbers (or options) that appear inside the function that can’t be accessed by a user of the function.
+
+    -   – For example, maybe quantile(x, type = 1, ...) appears in your function. The choice of 1 is arbitrary – unless you’re making a function like quantile_type_1().
+
+-   Your function should be reasonably flexible on its inputs. Here is an example of a function that is not reasonably flexible: a function called count_missing_values_by_group() that only works when the data frame has columns that are all of type fct.
+
+-   The output is consistent – for example, always gives a list. An example of inconsistent output: sapply(1:3, seq_len) gives a list, and sapply(1:3, sqrt) gives an (atomic) vector.
+
+Your function includes appropriate arguments. (Do you handle NA’s appropriately? Are you using the ellipsis properly? etc.)
+
+```{r}
+#Load appropriate packages
+library(dplyr)
+library(datateachr)
+library(testthat)
+```
+
+```{r}
+#' Summarise a numeric column by group
+#'
+#' This function takes a data frame and summarises a numeric column
+#' (ex. income, score) by a chosen grouping variable (ex. region, category). 
+#' It returns the mean and median of the numeric variable for each group.
+#'
+#' @param data A data frame containing the variables of interest.
+#' @param group_col The column used to group observations (e.g., decade or region).
+#' @param value_col The numeric column to summarise (e.g. income, score).
+#'
+#' @return A tibble containing one row per group with two summary statistics:
+#' the mean and median of the selected numeric column.
+
+summarise_by_group <- function(data, group_col, value_col) {
+  data %>%
+    group_by({{ group_col }}) %>%
+    summarise(
+      mean = mean({{ value_col }}, na.rm = TRUE),
+      median = median({{ value_col }}, na.rm = TRUE)
+    )
+}
+```
+
+## Exercise 2: Document your Function (20 points)
+
+In the same code chunk where you made your function, document the function using roxygen2 tags. Be sure to include:
+
+1.  Title.
+2.  Function description: In 1-2 brief sentences, describe what the function does.
+3.  Document each argument with the @param tag, making sure to justify why you named the parameter as you did. • (Justification for naming is not often needed, but we want to hear your reasoning.)
+4.  What the function returns, using the @return tag.
+
+## Exercise 3: Include examples (15 points)
+
+Demonstrate the usage of your function with a few (2) examples. Use one or more new code chunks, describing what you’re doing. Note: If you want to deliberately show an error, you can use error = TRUE in your code chunk option.
+
+### Example 1:
+
+```{r}
+head(flow_sample)
+summarise_by_group(flow_sample, year, flow)
+```
+
+### Example 2:
+
+```{r}
+head(mtcars)
+summarise_by_group(mtcars, gear, wt)
+```
+
+## Exercise 4: Test the Function (25 points)
+
+Running examples is a good way of checking by-eye whether your function is working as expected. But, having a formal “yes or no” check is useful when you move on to other parts of your analysis. Write formal tests for your function. You should use at least three non-redundant uses of an expect\_() function from the testthat package, and they should be contained in a test_that() function (or more than one). They should all pass.
+
+Example of non-redundant inputs:
+
+-   Vector with no NA’s
+
+-   Vector that has NA’s
+
+-   Vector of a different type (if relevant)
+
+-   Vector of length 0, like numeric(0).
+
+Example of redundant inputs:
+
+-   Providing a different number (unless one of these numbers have some significance, like an extreme point – just tell us if that’s the case)
+
+### Test #1:
+
+```{r}
+any(is.na(mtcars)) #mtcars has no NA values
+
+# Test 1: Works with complete data
+test_that("Function works with vector without NA's", {
+  expect_
+```
+
+### Test #2:
+
+```{r}
+# Test 2: Handles NA values properly
+test_that("Function correctly handles NA values", {
+  test_data <- tibble(
+    group = c("A", "A", "B", "B"),
+    value = c(1, NA, 3, 4)
+  )
+  result <- summarise_by_group(test_data, "group", "value")
+
+  expect_false(any(is.na(result$mean)))              # Means should not be NA
+  expect_equal(result$mean[result$group == "A"], 1)  # Only one valid value
+})
+```
+
+### Test #3:
+
+```{r}
+# Test 3: Works with empty data frame
+test_that("Function works with empty data", {
+  test_data <- tibble(group = character(), value = numeric())
+  result <- summarise_by_group(test_data, "group", "value")
+
+  expect_equal(nrow(result), 0)                      # Should return empty tibble
+  expect_s3_class(result, "tbl_df")                  # Should still be a tibble
+})
+```
