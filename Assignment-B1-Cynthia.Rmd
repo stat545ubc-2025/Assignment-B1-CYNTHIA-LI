@@ -51,9 +51,9 @@ library(testthat)
 ```
 
 ```{r}
-#' Summarise a numeric column by group
+#' @title Summarise a numeric column by group
 #'
-#' This function takes a data frame and summarises a numeric column
+#' @description This function takes a data frame and summarises a numeric column
 #' (ex. income, score) by a chosen grouping variable (ex. region, category). 
 #' It returns the mean and median of the numeric variable for each group.
 #'
@@ -62,7 +62,7 @@ library(testthat)
 #' @param value_col The numeric column to summarise (e.g. income, score).
 #'
 #' @return A tibble containing one row per group with two summary statistics:
-#' the mean and median of the selected numeric column.
+#' the mean and median of the selected numeric column. This function will automatically remove the NAs from your data and thus your resulting tibble will not contain NAs
 
 summarise_by_group <- function(data, group_col, value_col) {
   data %>%
@@ -119,41 +119,83 @@ Example of redundant inputs:
 
 -   Providing a different number (unless one of these numbers have some significance, like an extreme point – just tell us if that’s the case)
 
-### Test #1:
+### Creating tibbles for testing
 
 ```{r}
-any(is.na(mtcars)) #mtcars has no NA values
 
-# Test 1: Works with complete data
-test_that("Function works with vector without NA's", {
-  expect_
+#Tibble for Test 1
+my_data1 <- tibble(
+  group = c("A", "A", "A", "B", "B", "B", "C", "C", "C"),
+  category = c("X", "Y", "Z", "X", "Z", "Y", "Y", "Z", "X"),
+  values = c(9, 0, 0, 12, 89, 56, 34, 78, 90)
+)
+
+my_data1
+
+#Tibble for Test 2
+my_data2 <- tibble(
+  group = c("A", "A", "A", "B", "B", "B", "C", "C", "C"),
+  category = c("X", "Y", "Z", "X", "Z", "Y", "Y", "Z", "X"),
+  values = c(NA, NA, NA, 12, 89, 56, 34, 78, 90)
+)
+
+my_data2
+
+#Tibble for Test 3
+my_data3 <- tibble(
+  group = c("A", "A", "A", "B", "B", "B", "C", "C", "C"),
+  category = c("X", "Y", "Z", "X", "Z", "Y", "Y", "Z", "X"),
+  values = c(2, -4, -1, 12, 89, 56, 34, 78, 90)
+)
+
+my_data3
+
 ```
 
-### Test #2:
+### Test #1: Handles values of zero correctly
 
 ```{r}
-# Test 2: Handles NA values properly
-test_that("Function correctly handles NA values", {
-  test_data <- tibble(
-    group = c("A", "A", "B", "B"),
-    value = c(1, NA, 3, 4)
-  )
-  result <- summarise_by_group(test_data, "group", "value")
 
-  expect_false(any(is.na(result$mean)))              # Means should not be NA
-  expect_equal(result$mean[result$group == "A"], 1)  # Only one valid value
+test_that("Function correctly incorporates 0 values when summarising", {
+  result <- summarise_by_group(my_data1, group, values)
+  
+  #Manually calculating the value, we should get 3 for mean and 0 for median
+  
+  #Expect manually calculated value in the result
+  expect_equal(result %>% filter(group == "A") %>% pull(mean), 3) #this allows us to filter for only group A's mean value
+  expect_equal(result %>% filter(group == "A") %>% pull(median), 0) #this allows us to filter for only group A's meedian value
+ 
+})
+
+```
+
+### Test #2: Handles NA values correctly
+
+```{r}
+             
+test_that("Function correctly incorporates NA values when summarising", {
+  result <- summarise_by_group(my_data2, group, values)
+  
+  #Since all values for group A are NA, we should get NA for mean and median
+  
+  #Expect manually calculated value in the result
+  expect_true(is.na(result %>% filter(group == "A") %>% pull(mean))) #this allows us to filter for only group A's mean value
+  expect_true(is.na(result %>% filter(group == "A") %>% pull(median))) #this allows us to filter for only group A's meedian value
+ 
 })
 ```
 
-### Test #3:
+### Test #3: Handles negative values correctly
 
 ```{r}
-# Test 3: Works with empty data frame
-test_that("Function works with empty data", {
-  test_data <- tibble(group = character(), value = numeric())
-  result <- summarise_by_group(test_data, "group", "value")
-
-  expect_equal(nrow(result), 0)                      # Should return empty tibble
-  expect_s3_class(result, "tbl_df")                  # Should still be a tibble
+test_that("Function correctly incorporates negative values when summarising", {
+  result <- summarise_by_group(my_data3, group, values)
+  
+  #Manually calculating the value, we should get -1 for mean and -1 for median
+  
+  #Expect manually calculated value in the result
+  expect_equal(result %>% filter(group == "A") %>% pull(mean), -1)
+  expect_equal(result %>% filter(group == "A") %>% pull(median), -1)
+ 
 })
 ```
