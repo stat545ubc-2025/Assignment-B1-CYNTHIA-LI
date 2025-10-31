@@ -2,50 +2,17 @@
 title: "Assignment B1"
 author: "Cynthia"
 date: "2025-10-24"
-output: html_document
+output: github_document
 ---
 
 ## Exercise 1: Make a Function (25 points)
 
-In this exercise, you’ll be making a function and fortifying it. The function need not be complicated. The function need not be “serious”, but shouldn’t be nonsense.
-
-Function Ideas
-
--   Did you repeat any code for a data analysis in STAT 545A? If so, consider making a function for this action.
-
--   Consider bundling a specific group_by() %\>% summarise() workflow.
-
--   Write a wrapper around an existing function.
-
-    -   – For example, perhaps accepting a narrower range of inputs (like not allowing logical vectors), or providing a different output.
-
-    -   – A specific example: the rqdist() function is a wrapper around quantreg::rq(), narrowing its functionality.
-
-    -   – It’s usually better to narrow a function’s focus than to broaden, so that a function doesn’t end up doing too much.
-
--   Make a special plot that you’d want to repeat when exploring your data.
-
--   . . .
-
-Guidelines
-
--   Your function should not rely on anything from your working environment.
-
--   Your function should not rely on “magic numbers”
-
-    -   – pre-selected numbers (or options) that appear inside the function that can’t be accessed by a user of the function.
-
-    -   – For example, maybe quantile(x, type = 1, ...) appears in your function. The choice of 1 is arbitrary – unless you’re making a function like quantile_type_1().
-
--   Your function should be reasonably flexible on its inputs. Here is an example of a function that is not reasonably flexible: a function called count_missing_values_by_group() that only works when the data frame has columns that are all of type fct.
-
--   The output is consistent – for example, always gives a list. An example of inconsistent output: sapply(1:3, seq_len) gives a list, and sapply(1:3, sqrt) gives an (atomic) vector.
-
-Your function includes appropriate arguments. (Do you handle NA’s appropriately? Are you using the ellipsis properly? etc.)
+In this exercise, you’ll be making a function and fortifying it.
 
 ```{r}
 #Load appropriate packages
-library(dplyr)
+library(roxygen2)
+library(tidyverse)
 library(datateachr)
 library(testthat)
 ```
@@ -64,7 +31,14 @@ library(testthat)
 #' @return A tibble containing one row per group with two summary statistics:
 #' the mean and median of the selected numeric column. This function will automatically remove the NAs from your data and thus your resulting tibble will not contain NAs
 
+
 summarise_by_group <- function(data, group_col, value_col) {
+  
+  #Show error if volue_col is not numeric
+  if(!is.numeric(pull(data,{{value_col}}))){
+    stop("The value_col column must be numeric")
+  }
+  
   data %>%
     group_by({{ group_col }}) %>%
     summarise(
@@ -87,14 +61,18 @@ In the same code chunk where you made your function, document the function using
 
 Demonstrate the usage of your function with a few (2) examples. Use one or more new code chunks, describing what you’re doing. Note: If you want to deliberately show an error, you can use error = TRUE in your code chunk option.
 
-### Example 1:
+### Example 1: Applying the function to the flow_sample dataset
+
+Here we are using our function to group by year, and then obtain the mean and median flow values for each year
 
 ```{r}
 head(flow_sample)
 summarise_by_group(flow_sample, year, flow)
 ```
 
-### Example 2:
+### Example 2: Applying the function to the mtcars dataset
+
+Here we are grouping by gear number, and then calculating the mean and median weight for each group
 
 ```{r}
 head(mtcars)
@@ -104,20 +82,6 @@ summarise_by_group(mtcars, gear, wt)
 ## Exercise 4: Test the Function (25 points)
 
 Running examples is a good way of checking by-eye whether your function is working as expected. But, having a formal “yes or no” check is useful when you move on to other parts of your analysis. Write formal tests for your function. You should use at least three non-redundant uses of an expect\_() function from the testthat package, and they should be contained in a test_that() function (or more than one). They should all pass.
-
-Example of non-redundant inputs:
-
--   Vector with no NA’s
-
--   Vector that has NA’s
-
--   Vector of a different type (if relevant)
-
--   Vector of length 0, like numeric(0).
-
-Example of redundant inputs:
-
--   Providing a different number (unless one of these numbers have some significance, like an extreme point – just tell us if that’s the case)
 
 ### Creating tibbles for testing
 
