@@ -94,10 +94,8 @@ function using roxygen2 tags. Be sure to include:
 
 ## Exercise 3: Include examples (15 points)
 
-Demonstrate the usage of your function with a few (2) examples. Use one
-or more new code chunks, describing what you’re doing. Note: If you want
-to deliberately show an error, you can use error = TRUE in your code
-chunk option.
+Demonstrate the usage of your function with a few examples. Use one or
+more new code chunks, describing what you’re doing.
 
 ### Example 1: Applying the function to the flow_sample dataset
 
@@ -259,12 +257,12 @@ test_that("Function correctly incorporates 0 values when summarising", {
   
   #Expect manually calculated value in the result
   expect_equal(result %>% filter(group == "A") %>% pull(mean), 3) #this allows us to filter for only group A's mean value
-  expect_equal(result %>% filter(group == "A") %>% pull(median), 0) #this allows us to filter for only group A's meedian value
+  expect_equal(result %>% filter(group == "A") %>% pull(median), 0) #this allows us to filter for only group A's median value
  
 })
 ```
 
-    ## Test passed 😀
+    ## Test passed 🎊
 
 ### Test \#2: Handles NA values correctly
 
@@ -276,12 +274,12 @@ test_that("Function correctly incorporates NA values when summarising", {
   
   #Expect manually calculated value in the result
   expect_true(is.na(result %>% filter(group == "A") %>% pull(mean))) #this allows us to filter for only group A's mean value
-  expect_true(is.na(result %>% filter(group == "A") %>% pull(median))) #this allows us to filter for only group A's meedian value
+  expect_true(is.na(result %>% filter(group == "A") %>% pull(median))) #this allows us to filter for only group A's median value
  
 })
 ```
 
-    ## Test passed 🌈
+    ## Test passed 🎉
 
 ### Test \#3: Handles negative values correctly
 
@@ -298,4 +296,4 @@ test_that("Function correctly incorporates negative values when summarising", {
 })
 ```
 
-    ## Test passed 🎊
+    ## Test passed 😀
