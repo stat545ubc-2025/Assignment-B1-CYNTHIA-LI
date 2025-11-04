@@ -65,16 +65,22 @@ library(testthat)
 
 summarise_by_group <- function(data, group_col, value_col) {
   
-  #Show error if volue_col is not numeric
-  if(!is.numeric(pull(data,{{value_col}}))){
+  # Shows error if group_col or value_col is in string format (eg. "group_col")
+  if (any(is.character(substitute(group_col)), is.character(substitute(value_col)))) { #substitute allows us to directly view what the user typed as input, this will stop the function if either group_col or value_col is a string
+    stop("Please provide column names without quotes")
+  }
+  
+  # Show error if value_col is not numeric
+  if(!is.numeric(dplyr::pull(data, {{value_col}}))){
     stop("The value_col column must be numeric")
   }
   
   data %>%
-    group_by({{ group_col }}) %>%
-    summarise(
+    dplyr::group_by({{ group_col }}) %>%
+    dplyr::summarise(
       mean = mean({{ value_col }}, na.rm = TRUE),
-      median = median({{ value_col }}, na.rm = TRUE)
+      median = median({{ value_col }}, na.rm = TRUE),
+      .groups = "drop" #drops grouping to avoid issues in future use
     )
 }
 ```
@@ -180,7 +186,7 @@ pass.
 my_data1 <- tibble(
   group = c("A", "A", "A", "B", "B", "B", "C", "C", "C"),
   category = c("X", "Y", "Z", "X", "Z", "Y", "Y", "Z", "X"),
-  values = c(9, 0, 0, 12, 89, 56, 34, 78, 90)
+  values = c("9", "0", "0", 12, 89, 56, 34, 78, 90)
 )
 
 my_data1
@@ -188,16 +194,16 @@ my_data1
 
     ## # A tibble: 9 × 3
     ##   group category values
-    ##   <chr> <chr>     <dbl>
-    ## 1 A     X             9
-    ## 2 A     Y             0
-    ## 3 A     Z             0
-    ## 4 B     X            12
-    ## 5 B     Z            89
-    ## 6 B     Y            56
-    ## 7 C     Y            34
-    ## 8 C     Z            78
-    ## 9 C     X            90
+    ##   <chr> <chr>    <chr> 
+    ## 1 A     X        9     
+    ## 2 A     Y        0     
+    ## 3 A     Z        0     
+    ## 4 B     X        12    
+    ## 5 B     Z        89    
+    ## 6 B     Y        56    
+    ## 7 C     Y        34    
+    ## 8 C     Z        78    
+    ## 9 C     X        90
 
 ``` r
 #Tibble for Test 2
@@ -228,7 +234,7 @@ my_data2
 my_data3 <- tibble(
   group = c("A", "A", "A", "B", "B", "B", "C", "C", "C"),
   category = c("X", "Y", "Z", "X", "Z", "Y", "Y", "Z", "X"),
-  values = c(2, -4, -1, 12, 89, 56, 34, 78, 90)
+  values = c(9, 0, 0, 12, 89, 56, 34, 78, 90)
 )
 
 my_data3
@@ -237,9 +243,9 @@ my_data3
     ## # A tibble: 9 × 3
     ##   group category values
     ##   <chr> <chr>     <dbl>
-    ## 1 A     X             2
-    ## 2 A     Y            -4
-    ## 3 A     Z            -1
+    ## 1 A     X             9
+    ## 2 A     Y             0
+    ## 3 A     Z             0
     ## 4 B     X            12
     ## 5 B     Z            89
     ## 6 B     Y            56
@@ -247,22 +253,17 @@ my_data3
     ## 8 C     Z            78
     ## 9 C     X            90
 
-### Test \#1: Handles values of zero correctly
+### Test \#1: Does not take non-numeric values as input for value_col
 
 ``` r
-test_that("Function correctly incorporates 0 values when summarising", {
-  result <- summarise_by_group(my_data1, group, values)
-  
-  #Manually calculating the value, we should get 3 for mean and 0 for median
-  
-  #Expect manually calculated value in the result
-  expect_equal(result %>% filter(group == "A") %>% pull(mean), 3) #this allows us to filter for only group A's mean value
-  expect_equal(result %>% filter(group == "A") %>% pull(median), 0) #this allows us to filter for only group A's median value
+test_that("Function does not accept non-numeric values when summarising", {
+  #We would expect an error as our input is non-numeric (it's a string)
+  expect_error(summarise_by_group(my_data1, group, values))
  
 })
 ```
 
-    ## Test passed 🎊
+    ## Test passed 🥇
 
 ### Test \#2: Handles NA values correctly
 
@@ -279,20 +280,15 @@ test_that("Function correctly incorporates NA values when summarising", {
 })
 ```
 
-    ## Test passed 🎉
+    ## Test passed 🎊
 
-### Test \#3: Handles negative values correctly
+### Test \#3: Does not allow user to input strings as column names
 
 ``` r
-test_that("Function correctly incorporates negative values when summarising", {
-  result <- summarise_by_group(my_data3, group, values)
+test_that("Function correctly does not allow user to input strings when referencing columns", {
   
-  #Manually calculating the value, we should get -1 for mean and -1 for median
-  
-  #Expect manually calculated value in the result
-  expect_equal(result %>% filter(group == "A") %>% pull(mean), -1)
-  expect_equal(result %>% filter(group == "A") %>% pull(median), -1)
- 
+  #We would expect an error as we are not inputting the correct format for group_col
+  expect_error(summarise_by_group(my_data3, "group", values))
 })
 ```
 
