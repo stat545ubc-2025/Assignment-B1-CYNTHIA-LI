@@ -56,11 +56,11 @@ library(testthat)
 #' It returns the mean and median of the numeric variable for each group.
 #'
 #' @param data A data frame containing the variables of interest.
-#' @param group_col The column used to group observations (e.g., decade or region).
-#' @param value_col The numeric column to summarise (e.g. income, score).
+#' @param group_col The column used to group observations (e.g., decade or region). Provides our 'groups'.
+#' @param value_col The numeric column to summarise (e.g. income, score). Provides our 'values'.
 #'
 #' @return A tibble containing one row per group with two summary statistics:
-#' the mean and median of the selected numeric column. This function will automatically remove the NAs from your data and thus your resulting tibble will not contain NAs
+#' the mean and median of the selected numeric column. This function will automatically remove the NAs from your data and thus your resulting tibble will not contain NAs. 
 
 
 summarise_by_group <- function(data, group_col, value_col) {
@@ -71,13 +71,13 @@ summarise_by_group <- function(data, group_col, value_col) {
   }
   
   # Show error if value_col is not numeric
-  if(!is.numeric(dplyr::pull(data, {{value_col}}))){
+  if(!is.numeric(pull(data, {{value_col}}))){
     stop("The value_col column must be numeric")
   }
   
   data %>%
-    dplyr::group_by({{ group_col }}) %>%
-    dplyr::summarise(
+    group_by({{ group_col }}) %>%
+    summarise(
       mean = mean({{ value_col }}, na.rm = TRUE),
       median = median({{ value_col }}, na.rm = TRUE),
       .groups = "drop" #drops grouping to avoid issues in future use
@@ -105,8 +105,8 @@ more new code chunks, describing what you’re doing.
 
 ### Example 1: Applying the function to the flow_sample dataset
 
-Here we are using our function to group by year, and then obtain the
-mean and median flow values for each year
+Here we are using our function to group by month, and then obtain the
+mean and median flow values for each month.
 
 ``` r
 head(flow_sample)
@@ -123,28 +123,28 @@ head(flow_sample)
     ## 6 05BB001     1914 maximum          6    18   214 <NA>
 
 ``` r
-summarise_by_group(flow_sample, year, flow)
+summarise_by_group(flow_sample, month, flow)
 ```
 
-    ## # A tibble: 109 × 3
-    ##     year  mean median
-    ##    <dbl> <dbl>  <dbl>
-    ##  1  1909 314    314  
-    ##  2  1910 230    230  
-    ##  3  1911 135.   135. 
-    ##  4  1912  89.9   89.9
-    ##  5  1913 119.   119. 
-    ##  6  1914 111.   111. 
-    ##  7  1915 121.   121. 
-    ##  8  1916 158.   158. 
-    ##  9  1917  90.0   90.0
-    ## 10  1918 176.   176. 
-    ## # ℹ 99 more rows
+    ## # A tibble: 11 × 3
+    ##    month   mean median
+    ##    <dbl>  <dbl>  <dbl>
+    ##  1     1   6.50   6.68
+    ##  2     2   6.07   6.02
+    ##  3     3   6.42   6.39
+    ##  4     4   6.17   6.16
+    ##  5     5 194.   190.  
+    ##  6     6 218.   213   
+    ##  7     7 200.   182   
+    ##  8     8 174    174   
+    ##  9    11   6.11   6.14
+    ## 10    12   6.19   6.09
+    ## 11    NA NaN     NA
 
 ### Example 2: Applying the function to the mtcars dataset
 
 Here we are grouping by gear number, and then calculating the mean and
-median weight for each group
+median weight for each group.
 
 ``` r
 head(mtcars)
@@ -263,7 +263,7 @@ test_that("Function does not accept non-numeric values when summarising", {
 })
 ```
 
-    ## Test passed 🥇
+    ## Test passed 😸
 
 ### Test \#2: Handles NA values correctly
 
@@ -272,15 +272,13 @@ test_that("Function correctly incorporates NA values when summarising", {
   result <- summarise_by_group(my_data2, group, values)
   
   #Since all values for group A are NA, we should get NA for mean and median
-  
-  #Expect manually calculated value in the result
   expect_true(is.na(result %>% filter(group == "A") %>% pull(mean))) #this allows us to filter for only group A's mean value
   expect_true(is.na(result %>% filter(group == "A") %>% pull(median))) #this allows us to filter for only group A's median value
  
 })
 ```
 
-    ## Test passed 🎊
+    ## Test passed 😀
 
 ### Test \#3: Does not allow user to input strings as column names
 
@@ -292,4 +290,4 @@ test_that("Function correctly does not allow user to input strings when referenc
 })
 ```
 
-    ## Test passed 😀
+    ## Test passed 🥳
